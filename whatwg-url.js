@@ -1169,7 +1169,6 @@ const { percentEncode, percentDecode } = require("./urlencoded");
 const specialSchemes = {
   ftp: 21,
   file: null,
-  gopher: 70,
   http: 80,
   https: 443,
   ws: 80,
@@ -2394,7 +2393,6 @@ module.exports.serializeURLOrigin = function (url) {
         return "null";
       }
     case "ftp":
-    case "gopher":
     case "http":
     case "https":
     case "ws":
