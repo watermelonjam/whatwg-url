@@ -1,31 +1,5 @@
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.whatwgURL = f()}})(function(){var define,module,exports;return (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 "use strict";
-
-const { URL, URLSearchParams } = require("./webidl2js-wrapper");
-const urlStateMachine = require("./lib/url-state-machine");
-const urlEncoded = require("./lib/urlencoded");
-
-const sharedGlobalObject = {};
-URL.install(sharedGlobalObject);
-URLSearchParams.install(sharedGlobalObject);
-
-exports.URL = sharedGlobalObject.URL;
-exports.URLSearchParams = sharedGlobalObject.URLSearchParams;
-
-exports.parseURL = urlStateMachine.parseURL;
-exports.basicURLParse = urlStateMachine.basicURLParse;
-exports.serializeURL = urlStateMachine.serializeURL;
-exports.serializeHost = urlStateMachine.serializeHost;
-exports.serializeInteger = urlStateMachine.serializeInteger;
-exports.serializeURLOrigin = urlStateMachine.serializeURLOrigin;
-exports.setTheUsername = urlStateMachine.setTheUsername;
-exports.setThePassword = urlStateMachine.setThePassword;
-exports.cannotHaveAUsernamePasswordPort = urlStateMachine.cannotHaveAUsernamePasswordPort;
-
-exports.percentDecode = urlEncoded.percentDecode;
-
-},{"./lib/url-state-machine":7,"./lib/urlencoded":8,"./webidl2js-wrapper":20}],2:[function(require,module,exports){
-"use strict";
 const usm = require("./url-state-machine");
 const urlencoded = require("./urlencoded");
 const URLSearchParams = require("./URLSearchParams");
@@ -243,7 +217,7 @@ exports.implementation = class URLImpl {
   }
 };
 
-},{"./URLSearchParams":5,"./url-state-machine":7,"./urlencoded":8}],3:[function(require,module,exports){
+},{"./URLSearchParams":4,"./url-state-machine":6,"./urlencoded":7}],2:[function(require,module,exports){
 "use strict";
 
 const conversions = require("webidl-conversions");
@@ -608,7 +582,7 @@ exports.install = function install(globalObject) {
 
 const Impl = require("./URL-impl.js");
 
-},{"./URL-impl.js":2,"./utils.js":9,"webidl-conversions":19}],4:[function(require,module,exports){
+},{"./URL-impl.js":1,"./utils.js":8,"webidl-conversions":19}],3:[function(require,module,exports){
 "use strict";
 const stableSortBy = require("lodash.sortby");
 const urlencoded = require("./urlencoded");
@@ -732,7 +706,7 @@ exports.implementation = class URLSearchParamsImpl {
   }
 };
 
-},{"./urlencoded":8,"lodash.sortby":14}],5:[function(require,module,exports){
+},{"./urlencoded":7,"lodash.sortby":14}],4:[function(require,module,exports){
 "use strict";
 
 const conversions = require("webidl-conversions");
@@ -1195,7 +1169,7 @@ exports.install = function install(globalObject) {
 
 const Impl = require("./URLSearchParams-impl.js");
 
-},{"./URLSearchParams-impl.js":4,"./utils.js":9,"webidl-conversions":19}],6:[function(require,module,exports){
+},{"./URLSearchParams-impl.js":3,"./utils.js":8,"webidl-conversions":19}],5:[function(require,module,exports){
 "use strict";
 
 function isASCIIDigit(c) {
@@ -1221,7 +1195,7 @@ module.exports = {
   isASCIIHex
 };
 
-},{}],7:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
 (function (Buffer){
 "use strict";
 const punycode = require("punycode");
@@ -2501,7 +2475,7 @@ module.exports.parseURL = function (input, options) {
 };
 
 }).call(this,require("buffer").Buffer)
-},{"./infra":6,"./urlencoded":8,"buffer":12,"punycode":11,"tr46":15}],8:[function(require,module,exports){
+},{"./infra":5,"./urlencoded":7,"buffer":12,"punycode":11,"tr46":15}],7:[function(require,module,exports){
 (function (Buffer){
 "use strict";
 const { isASCIIHex } = require("./infra");
@@ -2643,7 +2617,7 @@ module.exports = {
 };
 
 }).call(this,require("buffer").Buffer)
-},{"./infra":6,"buffer":12}],9:[function(require,module,exports){
+},{"./infra":5,"buffer":12}],8:[function(require,module,exports){
 "use strict";
 
 // Returns "Type(value) is Object" in ES terminology.
@@ -2760,7 +2734,33 @@ module.exports = exports = {
   namedDelete
 };
 
-},{}],10:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
+"use strict";
+
+const { URL, URLSearchParams } = require("./webidl2js-wrapper");
+const urlStateMachine = require("./dist/url-state-machine");
+const urlEncoded = require("./dist/urlencoded");
+
+const sharedGlobalObject = {};
+URL.install(sharedGlobalObject);
+URLSearchParams.install(sharedGlobalObject);
+
+exports.URL = sharedGlobalObject.URL;
+exports.URLSearchParams = sharedGlobalObject.URLSearchParams;
+
+exports.parseURL = urlStateMachine.parseURL;
+exports.basicURLParse = urlStateMachine.basicURLParse;
+exports.serializeURL = urlStateMachine.serializeURL;
+exports.serializeHost = urlStateMachine.serializeHost;
+exports.serializeInteger = urlStateMachine.serializeInteger;
+exports.serializeURLOrigin = urlStateMachine.serializeURLOrigin;
+exports.setTheUsername = urlStateMachine.setTheUsername;
+exports.setThePassword = urlStateMachine.setThePassword;
+exports.cannotHaveAUsernamePasswordPort = urlStateMachine.cannotHaveAUsernamePasswordPort;
+
+exports.percentDecode = urlEncoded.percentDecode;
+
+},{"./dist/url-state-machine":6,"./dist/urlencoded":7,"./webidl2js-wrapper":20}],10:[function(require,module,exports){
 'use strict'
 
 exports.byteLength = byteLength
@@ -8691,11 +8691,11 @@ exports.VoidFunction = convertCallbackFunction;
 },{}],20:[function(require,module,exports){
 "use strict";
 
-const URL = require("./lib/URL");
-const URLSearchParams = require("./lib/URLSearchParams");
+const URL = require("./dist/URL");
+const URLSearchParams = require("./dist/URLSearchParams");
 
 exports.URL = URL;
 exports.URLSearchParams = URLSearchParams;
 
-},{"./lib/URL":3,"./lib/URLSearchParams":5}]},{},[1])(1)
+},{"./dist/URL":2,"./dist/URLSearchParams":4}]},{},[9])(9)
 });
