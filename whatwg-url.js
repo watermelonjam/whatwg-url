@@ -1170,8 +1170,17 @@ exports.install = function install(globalObject) {
 const Impl = require("./URLSearchParams-impl.js");
 
 },{"./URLSearchParams-impl.js":3,"./utils.js":10,"webidl-conversions":22}],5:[function(require,module,exports){
+(function (global){
 "use strict";
-const { TextEncoder, TextDecoder } = require("util");
+let { TextEncoder, TextDecoder } = require("util");
+// Handle browserify's lack of support (https://github.com/browserify/node-util/issues/46), which
+// is important for the live viewer:
+if (!TextEncoder) {
+  TextEncoder = global.TextEncoder;
+}
+if (!TextDecoder) {
+  TextDecoder = global.TextDecoder;
+}
 
 const utf8Encoder = new TextEncoder();
 const utf8Decoder = new TextDecoder("utf-8", { ignoreBOM: true });
@@ -1189,6 +1198,7 @@ module.exports = {
   utf8DecodeWithoutBOM
 };
 
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{"util":21}],6:[function(require,module,exports){
 "use strict";
 
