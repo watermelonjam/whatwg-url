@@ -1232,7 +1232,7 @@ module.exports = {
 const { isASCIIHex } = require("./infra");
 const { utf8Encode } = require("./encoding");
 
-// https://whatpr.org/url/518.html#percent-encode
+// https://url.spec.whatwg.org/#percent-encode
 function percentEncode(c) {
   let hex = c.toString(16).toUpperCase();
   if (hex.length === 1) {
@@ -1242,7 +1242,7 @@ function percentEncode(c) {
   return "%" + hex;
 }
 
-// https://whatpr.org/url/518.html#percent-decode
+// https://url.spec.whatwg.org/#percent-decode
 function percentDecodeBytes(input) {
   const output = new Uint8Array(input.byteLength);
   let outputIndex = 0;
@@ -1262,58 +1262,61 @@ function percentDecodeBytes(input) {
   return output.slice(0, outputIndex);
 }
 
-// https://whatpr.org/url/518.html#string-percent-decode
+// https://url.spec.whatwg.org/#string-percent-decode
 function percentDecodeString(input) {
   const bytes = utf8Encode(input);
   return percentDecodeBytes(bytes);
 }
 
-// https://whatpr.org/url/518.html#c0-control-percent-encode-set
+// https://url.spec.whatwg.org/#c0-control-percent-encode-set
 function isC0ControlPercentEncode(c) {
   return c <= 0x1F || c > 0x7E;
 }
 
-// https://whatpr.org/url/518.html#fragment-percent-encode-set
+// https://url.spec.whatwg.org/#fragment-percent-encode-set
 const extraFragmentPercentEncodeSet = new Set([32, 34, 60, 62, 96]);
 function isFragmentPercentEncode(c) {
   return isC0ControlPercentEncode(c) || extraFragmentPercentEncodeSet.has(c);
 }
 
-// https://whatpr.org/url/518.html#query-percent-encode-set
+// https://url.spec.whatwg.org/#query-percent-encode-set
 const extraQueryPercentEncodeSet = new Set([32, 34, 35, 60, 62]);
 function isQueryPercentEncode(c) {
   return isC0ControlPercentEncode(c) || extraQueryPercentEncodeSet.has(c);
 }
 
-// https://whatpr.org/url/518.html#special-query-percent-encode-set
+// https://url.spec.whatwg.org/#special-query-percent-encode-set
 function isSpecialQueryPercentEncode(c) {
   return isQueryPercentEncode(c) || c === 39;
 }
 
-// https://whatpr.org/url/518.html#path-percent-encode-set
+// https://url.spec.whatwg.org/#path-percent-encode-set
 const extraPathPercentEncodeSet = new Set([63, 96, 123, 125]);
 function isPathPercentEncode(c) {
   return isQueryPercentEncode(c) || extraPathPercentEncodeSet.has(c);
 }
 
-// https://whatpr.org/url/518.html#userinfo-percent-encode-set
+// https://url.spec.whatwg.org/#userinfo-percent-encode-set
 const extraUserinfoPercentEncodeSet =
   new Set([47, 58, 59, 61, 64, 91, 92, 93, 94, 124]);
 function isUserinfoPercentEncode(c) {
   return isPathPercentEncode(c) || extraUserinfoPercentEncodeSet.has(c);
 }
 
-// https://whatpr.org/url/518.html#application-x-www-form-urlencoded-percent-encode-set
-const extraURLEncodedPercentEncodeSet = new Set([
-  33, 36, 37, 38, 39,
-  40, 41, 43, 44, 126
-]);
-function isURLEncodedPercentEncode(c) {
-  return isUserinfoPercentEncode(c) || extraURLEncodedPercentEncodeSet.has(c);
+// https://url.spec.whatwg.org/#component-percent-encode-set
+const extraComponentPercentEncodeSet = new Set([36, 37, 38, 43, 44]);
+function isComponentPercentEncode(c) {
+  return isUserinfoPercentEncode(c) || extraComponentPercentEncodeSet.has(c);
 }
 
-// https://whatpr.org/url/518.html#code-point-percent-encode-after-encoding
-// https://whatpr.org/url/518.html#utf-8-percent-encode
+// https://url.spec.whatwg.org/#application-x-www-form-urlencoded-percent-encode-set
+const extraURLEncodedPercentEncodeSet = new Set([33, 39, 40, 41, 126]);
+function isURLEncodedPercentEncode(c) {
+  return isComponentPercentEncode(c) || extraURLEncodedPercentEncodeSet.has(c);
+}
+
+// https://url.spec.whatwg.org/#code-point-percent-encode-after-encoding
+// https://url.spec.whatwg.org/#utf-8-percent-encode
 // Assuming encoding is always utf-8 allows us to trim one of the logic branches. TODO: support encoding.
 // The "-Internal" variant here has code points as JS strings. The external version used by other files has code points
 // as JS numbers, like the rest of the codebase.
@@ -1336,8 +1339,8 @@ function utf8PercentEncodeCodePoint(codePoint, percentEncodePredicate) {
   return utf8PercentEncodeCodePointInternal(String.fromCodePoint(codePoint), percentEncodePredicate);
 }
 
-// https://whatpr.org/url/518.html#string-percent-encode-after-encoding
-// https://whatpr.org/url/518.html#string-utf-8-percent-encode
+// https://url.spec.whatwg.org/#string-percent-encode-after-encoding
+// https://url.spec.whatwg.org/#string-utf-8-percent-encode
 function utf8PercentEncodeString(input, percentEncodePredicate, spaceAsPlus = false) {
   let output = "";
   for (const codePoint of input) {
@@ -2583,7 +2586,7 @@ module.exports.parseURL = function (input, options) {
 const { utf8Encode, utf8DecodeWithoutBOM } = require("./encoding");
 const { percentDecodeBytes, utf8PercentEncodeString, isURLEncodedPercentEncode } = require("./percent-encoding");
 
-// https://whatpr.org/url/518.html#concept-urlencoded-parser
+// https://url.spec.whatwg.org/#concept-urlencoded-parser
 function parseUrlencoded(input) {
   const sequences = strictlySplitByteSequence(input, 38);
   const output = [];
@@ -2615,12 +2618,12 @@ function parseUrlencoded(input) {
   return output;
 }
 
-// https://whatpr.org/url/518.html#concept-urlencoded-string-parser
+// https://url.spec.whatwg.org/#concept-urlencoded-string-parser
 function parseUrlencodedString(input) {
   return parseUrlencoded(utf8Encode(input));
 }
 
-// https://whatpr.org/url/518.html#concept-urlencoded-serializer
+// https://url.spec.whatwg.org/#concept-urlencoded-serializer
 function serializeUrlencoded(tuples, encodingOverride = undefined) {
   let encoding = "utf-8";
   if (encodingOverride !== undefined) {
