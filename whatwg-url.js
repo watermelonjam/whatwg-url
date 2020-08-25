@@ -2935,7 +2935,7 @@ module.exports = exports = {
 
 const { URL, URLSearchParams } = require("./webidl2js-wrapper");
 const urlStateMachine = require("./dist/url-state-machine");
-const urlEncoded = require("./dist/urlencoded");
+const percentEncoding = require("./dist/percent-encoding");
 
 const sharedGlobalObject = {};
 URL.install(sharedGlobalObject, ["Window"]);
@@ -2954,9 +2954,9 @@ exports.setTheUsername = urlStateMachine.setTheUsername;
 exports.setThePassword = urlStateMachine.setThePassword;
 exports.cannotHaveAUsernamePasswordPort = urlStateMachine.cannotHaveAUsernamePasswordPort;
 
-exports.percentDecode = urlEncoded.percentDecode;
+exports.percentDecode = percentEncoding.percentDecodeBytes;
 
-},{"./dist/url-state-machine":9,"./dist/urlencoded":10,"./webidl2js-wrapper":24}],13:[function(require,module,exports){
+},{"./dist/percent-encoding":8,"./dist/url-state-machine":9,"./webidl2js-wrapper":24}],13:[function(require,module,exports){
 (function (global){
 /*! https://mths.be/punycode v1.4.1 by @mathias */
 ;(function(root) {
