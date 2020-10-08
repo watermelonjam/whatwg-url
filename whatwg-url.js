@@ -2016,7 +2016,7 @@ URLStateMachine.prototype["parse scheme"] = function parseScheme(c, cStr) {
         return false;
       }
 
-      if (this.url.scheme === "file" && (this.url.host === "" || this.url.host === null)) {
+      if (this.url.scheme === "file" && this.url.host === "") {
         return false;
       }
     }
@@ -2314,6 +2314,7 @@ function startsWithWindowsDriveLetter(input, pointer) {
 
 URLStateMachine.prototype["parse file"] = function parseFile(c) {
   this.url.scheme = "file";
+  this.url.host = "";
 
   if (c === 47 || c === 92) {
     if (c === 92) {
@@ -2563,8 +2564,6 @@ function serializeURL(url, excludeFragment) {
     if (url.port !== null) {
       output += ":" + url.port;
     }
-  } else if (url.host === null && url.scheme === "file") {
-    output += "//";
   }
 
   if (url.cannotBeABaseURL) {
