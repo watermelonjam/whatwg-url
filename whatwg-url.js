@@ -104,11 +104,11 @@ exports.implementation = class URLImpl {
   }
 
   get protocol() {
-    return this._url.scheme + ":";
+    return `${this._url.scheme}:`;
   }
 
   set protocol(v) {
-    usm.basicURLParse(v + ":", { url: this._url, stateOverride: "scheme start" });
+    usm.basicURLParse(`${v}:`, { url: this._url, stateOverride: "scheme start" });
   }
 
   get username() {
@@ -146,7 +146,7 @@ exports.implementation = class URLImpl {
       return usm.serializeHost(url.host);
     }
 
-    return usm.serializeHost(url.host) + ":" + usm.serializeInteger(url.port);
+    return `${usm.serializeHost(url.host)}:${usm.serializeInteger(url.port)}`;
   }
 
   set host(v) {
@@ -202,7 +202,7 @@ exports.implementation = class URLImpl {
       return "";
     }
 
-    return "/" + this._url.path.join("/");
+    return `/${this._url.path.join("/")}`;
   }
 
   set pathname(v) {
@@ -219,7 +219,7 @@ exports.implementation = class URLImpl {
       return "";
     }
 
-    return "?" + this._url.query;
+    return `?${this._url.query}`;
   }
 
   set search(v) {
@@ -246,7 +246,7 @@ exports.implementation = class URLImpl {
       return "";
     }
 
-    return "#" + this._url.fragment;
+    return `#${this._url.fragment}`;
   }
 
   set hash(v) {
@@ -1335,10 +1335,10 @@ const { utf8Encode } = require("./encoding");
 function percentEncode(c) {
   let hex = c.toString(16).toUpperCase();
   if (hex.length === 1) {
-    hex = "0" + hex;
+    hex = `0${hex}`;
   }
 
-  return "%" + hex;
+  return `%${hex}`;
 }
 
 // https://url.spec.whatwg.org/#percent-decode
@@ -1523,11 +1523,11 @@ function isNormalizedWindowsDriveLetterString(string) {
 }
 
 function containsForbiddenHostCodePoint(string) {
-  return string.search(/\u0000|\u0009|\u000A|\u000D|\u0020|#|%|\/|:|<|>|\?|@|\[|\\|\]|\^|\|/) !== -1;
+  return string.search(/\u0000|\u0009|\u000A|\u000D|\u0020|#|%|\/|:|<|>|\?|@|\[|\\|\]|\^|\|/u) !== -1;
 }
 
 function containsForbiddenHostCodePointExcludingPercent(string) {
-  return string.search(/\u0000|\u0009|\u000A|\u000D|\u0020|#|\/|:|<|>|\?|@|\[|\\|\]|\^|\|/) !== -1;
+  return string.search(/\u0000|\u0009|\u000A|\u000D|\u0020|#|\/|:|<|>|\?|@|\[|\\|\]|\^|\|/u) !== -1;
 }
 
 function isSpecialScheme(scheme) {
@@ -1561,12 +1561,12 @@ function parseIPv4Number(input) {
     return 0;
   }
 
-  let regex = /[^0-7]/;
+  let regex = /[^0-7]/u;
   if (R === 10) {
-    regex = /[^0-9]/;
+    regex = /[^0-9]/u;
   }
   if (R === 16) {
-    regex = /[^0-9A-Fa-f]/;
+    regex = /[^0-9A-Fa-f]/u;
   }
 
   if (regex.test(input)) {
@@ -1606,7 +1606,7 @@ function parseIPv4(input) {
       return failure;
     }
   }
-  if (numbers[numbers.length - 1] >= Math.pow(256, 5 - numbers.length)) {
+  if (numbers[numbers.length - 1] >= 256 ** (5 - numbers.length)) {
     return failure;
   }
 
@@ -1614,7 +1614,7 @@ function parseIPv4(input) {
   let counter = 0;
 
   for (const n of numbers) {
-    ipv4 += n * Math.pow(256, 3 - counter);
+    ipv4 += n * 256 ** (3 - counter);
     ++counter;
   }
 
@@ -1628,7 +1628,7 @@ function serializeIPv4(address) {
   for (let i = 1; i <= 4; ++i) {
     output = String(n % 256) + output;
     if (i !== 4) {
-      output = "." + output;
+      output = `.${output}`;
     }
     n = Math.floor(n / 256);
   }
@@ -1871,7 +1871,7 @@ function serializeHost(host) {
 
   // IPv6 serializer
   if (host instanceof Array) {
-    return "[" + serializeIPv6(host) + "]";
+    return `[${serializeIPv6(host)}]`;
   }
 
   return host;
@@ -1892,11 +1892,11 @@ function domainToASCII(domain, beStrict = false) {
 }
 
 function trimControlChars(url) {
-  return url.replace(/^[\u0000-\u001F\u0020]+|[\u0000-\u001F\u0020]+$/g, "");
+  return url.replace(/^[\u0000-\u001F\u0020]+|[\u0000-\u001F\u0020]+$/ug, "");
 }
 
 function trimTabAndNewline(url) {
-  return url.replace(/\u0009|\u000A|\u000D/g, "");
+  return url.replace(/\u0009|\u000A|\u000D/ug, "");
 }
 
 function shortenPath(url) {
@@ -1920,7 +1920,7 @@ function cannotHaveAUsernamePasswordPort(url) {
 }
 
 function isNormalizedWindowsDriveLetter(string) {
-  return /^[A-Za-z]:$/.test(string);
+  return /^[A-Za-z]:$/u.test(string);
 }
 
 function URLStateMachine(input, base, encodingOverride, url, stateOverride) {
@@ -1974,7 +1974,7 @@ function URLStateMachine(input, base, encodingOverride, url, stateOverride) {
     const cStr = isNaN(c) ? undefined : String.fromCodePoint(c);
 
     // exec state machine
-    const ret = this["parse " + this.state](c, cStr);
+    const ret = this[`parse ${this.state}`](c, cStr);
     if (!ret) {
       break; // terminate algorithm
     } else if (ret === failure) {
@@ -2181,7 +2181,7 @@ URLStateMachine.prototype["parse authority"] = function parseAuthority(c, cStr) 
   if (c === 64) {
     this.parseError = true;
     if (this.atFlag) {
-      this.buffer = "%40" + this.buffer;
+      this.buffer = `%40${this.buffer}`;
     }
     this.atFlag = true;
 
@@ -2284,7 +2284,7 @@ URLStateMachine.prototype["parse port"] = function parsePort(c, cStr) {
              this.stateOverride) {
     if (this.buffer !== "") {
       const port = parseInt(this.buffer);
-      if (port > Math.pow(2, 16) - 1) {
+      if (port > 2 ** 16 - 1) {
         this.parseError = true;
         return failure;
       }
@@ -2454,7 +2454,7 @@ URLStateMachine.prototype["parse path"] = function parsePath(c) {
       this.url.path.push("");
     } else if (!isSingleDot(this.buffer)) {
       if (this.url.scheme === "file" && this.url.path.length === 0 && isWindowsDriveLetterString(this.buffer)) {
-        this.buffer = this.buffer[0] + ":";
+        this.buffer = `${this.buffer[0]}:`;
       }
       this.url.path.push(this.buffer);
     }
@@ -2555,14 +2555,14 @@ URLStateMachine.prototype["parse fragment"] = function parseFragment(c) {
 };
 
 function serializeURL(url, excludeFragment) {
-  let output = url.scheme + ":";
+  let output = `${url.scheme}:`;
   if (url.host !== null) {
     output += "//";
 
     if (url.username !== "" || url.password !== "") {
       output += url.username;
       if (url.password !== "") {
-        output += ":" + url.password;
+        output += `:${url.password}`;
       }
       output += "@";
     }
@@ -2570,7 +2570,7 @@ function serializeURL(url, excludeFragment) {
     output += serializeHost(url.host);
 
     if (url.port !== null) {
-      output += ":" + url.port;
+      output += `:${url.port}`;
     }
   }
 
@@ -2581,27 +2581,27 @@ function serializeURL(url, excludeFragment) {
       output += "/.";
     }
     for (const segment of url.path) {
-      output += "/" + segment;
+      output += `/${segment}`;
     }
   }
 
   if (url.query !== null) {
-    output += "?" + url.query;
+    output += `?${url.query}`;
   }
 
   if (!excludeFragment && url.fragment !== null) {
-    output += "#" + url.fragment;
+    output += `#${url.fragment}`;
   }
 
   return output;
 }
 
 function serializeOrigin(tuple) {
-  let result = tuple.scheme + "://";
+  let result = `${tuple.scheme}://`;
   result += serializeHost(tuple.host);
 
   if (tuple.port !== null) {
-    result += ":" + tuple.port;
+    result += `:${tuple.port}`;
   }
 
   return result;
@@ -2696,8 +2696,7 @@ function parseUrlencoded(input) {
       continue;
     }
 
-    let name;
-    let value;
+    let name, value;
     const indexOfEqual = bytes.indexOf(61);
 
     if (indexOfEqual >= 0) {
@@ -9829,7 +9828,7 @@ process.umask = function() { return 0; };
 
 },{}],169:[function(require,module,exports){
 (function (global){(function (){
-/*! https://mths.be/punycode v1.4.1 by @mathias */
+/*! https://mths.be/punycode v1.3.2 by @mathias */
 ;(function(root) {
 
 	/** Detect free variables */
@@ -9895,7 +9894,7 @@ process.umask = function() { return 0; };
 	 * @returns {Error} Throws a `RangeError` with the applicable error message.
 	 */
 	function error(type) {
-		throw new RangeError(errors[type]);
+		throw RangeError(errors[type]);
 	}
 
 	/**
@@ -10042,7 +10041,7 @@ process.umask = function() { return 0; };
 
 	/**
 	 * Bias adaptation function as per section 3.4 of RFC 3492.
-	 * https://tools.ietf.org/html/rfc3492#section-3.4
+	 * http://tools.ietf.org/html/rfc3492#section-3.4
 	 * @private
 	 */
 	function adapt(delta, numPoints, firstTime) {
@@ -10317,7 +10316,7 @@ process.umask = function() { return 0; };
 		 * @memberOf punycode
 		 * @type String
 		 */
-		'version': '1.4.1',
+		'version': '1.3.2',
 		/**
 		 * An object of methods to convert from JavaScript's internal character
 		 * representation (UCS-2) to Unicode code points, and back.
@@ -10347,17 +10346,14 @@ process.umask = function() { return 0; };
 			return punycode;
 		});
 	} else if (freeExports && freeModule) {
-		if (module.exports == freeExports) {
-			// in Node.js, io.js, or RingoJS v0.8.0+
+		if (module.exports == freeExports) { // in Node.js or RingoJS v0.8.0+
 			freeModule.exports = punycode;
-		} else {
-			// in Narwhal or RingoJS v0.7.0-
+		} else { // in Narwhal or RingoJS v0.7.0-
 			for (key in punycode) {
 				punycode.hasOwnProperty(key) && (freeExports[key] = punycode[key]);
 			}
 		}
-	} else {
-		// in Rhino or a web browser
+	} else { // in Rhino or a web browser
 		root.punycode = punycode;
 	}
 
@@ -10954,21 +10950,23 @@ function isDataView(value) {
 }
 exports.isDataView = isDataView;
 
+// Store a copy of SharedArrayBuffer in case it's deleted elsewhere
+var SharedArrayBufferCopy = typeof SharedArrayBuffer !== 'undefined' ? SharedArrayBuffer : undefined;
 function isSharedArrayBufferToString(value) {
   return ObjectToString(value) === '[object SharedArrayBuffer]';
 }
-isSharedArrayBufferToString.working = (
-  typeof SharedArrayBuffer !== 'undefined' &&
-  isSharedArrayBufferToString(new SharedArrayBuffer())
-);
 function isSharedArrayBuffer(value) {
-  if (typeof SharedArrayBuffer === 'undefined') {
+  if (typeof SharedArrayBufferCopy === 'undefined') {
     return false;
+  }
+
+  if (typeof isSharedArrayBufferToString.working === 'undefined') {
+    isSharedArrayBufferToString.working = isSharedArrayBufferToString(new SharedArrayBufferCopy());
   }
 
   return isSharedArrayBufferToString.working
     ? isSharedArrayBufferToString(value)
-    : value instanceof SharedArrayBuffer;
+    : value instanceof SharedArrayBufferCopy;
 }
 exports.isSharedArrayBuffer = isSharedArrayBuffer;
 
