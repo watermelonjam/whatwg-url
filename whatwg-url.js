@@ -1472,7 +1472,6 @@ module.exports = {
 }).call(this)}).call(this,require("buffer").Buffer)
 },{"./encoding":6,"./infra":7,"buffer":16}],9:[function(require,module,exports){
 "use strict";
-const punycode = require("punycode");
 const tr46 = require("tr46");
 
 const infra = require("./infra");
@@ -1642,7 +1641,7 @@ function parseIPv6(input) {
   let compress = null;
   let pointer = 0;
 
-  input = punycode.ucs2.decode(input);
+  input = Array.from(input, c => c.codePointAt(0));
 
   if (input[pointer] === 58) {
     if (input[pointer + 1] !== 58) {
@@ -1967,7 +1966,7 @@ function URLStateMachine(input, base, encodingOverride, url, stateOverride) {
   this.arrFlag = false;
   this.passwordTokenSeenFlag = false;
 
-  this.input = punycode.ucs2.decode(this.input);
+  this.input = Array.from(this.input, c => c.codePointAt(0));
 
   for (; this.pointer <= this.input.length; ++this.pointer) {
     const c = this.input[this.pointer];
@@ -2682,7 +2681,7 @@ module.exports.parseURL = function (input, options) {
   return module.exports.basicURLParse(input, { baseURL: options.baseURL, encodingOverride: options.encodingOverride });
 };
 
-},{"./encoding":6,"./infra":7,"./percent-encoding":8,"punycode":169,"tr46":170}],10:[function(require,module,exports){
+},{"./encoding":6,"./infra":7,"./percent-encoding":8,"tr46":170}],10:[function(require,module,exports){
 "use strict";
 const { utf8Encode, utf8DecodeWithoutBOM } = require("./encoding");
 const { percentDecodeBytes, utf8PercentEncodeString, isURLEncodedPercentEncode } = require("./percent-encoding");
