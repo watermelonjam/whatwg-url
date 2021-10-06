@@ -5,7 +5,7 @@ const { URL, URLSearchParams } = require("./webidl2js-wrapper");
 const urlStateMachine = require("./lib/url-state-machine");
 const percentEncoding = require("./lib/percent-encoding");
 
-const sharedGlobalObject = {};
+const sharedGlobalObject = { Array, Object, Promise, String, TypeError };
 URL.install(sharedGlobalObject, ["Window"]);
 URLSearchParams.install(sharedGlobalObject, ["Window"]);
 
@@ -31,16 +31,12 @@ exports.percentDecodeBytes = percentEncoding.percentDecodeBytes;
 const conversions = require("webidl-conversions");
 const utils = require("./utils.js");
 
-exports.convert = (value, { context = "The provided value" } = {}) => {
+exports.convert = (globalObject, value, { context = "The provided value" } = {}) => {
   if (typeof value !== "function") {
-    throw new TypeError(context + " is not a function");
+    throw new globalObject.TypeError(context + " is not a function");
   }
 
   function invokeTheCallbackFunction(...args) {
-    if (new.target !== undefined) {
-      throw new Error("Internal error: invokeTheCallbackFunction is not a constructor");
-    }
-
     const thisArg = utils.tryWrapperForImpl(this);
     let callResult;
 
@@ -50,7 +46,7 @@ exports.convert = (value, { context = "The provided value" } = {}) => {
 
     callResult = Reflect.apply(value, thisArg, args);
 
-    callResult = conversions["any"](callResult, { context: context });
+    callResult = conversions["any"](callResult, { context: context, globals: globalObject });
 
     return callResult;
   }
@@ -62,7 +58,7 @@ exports.convert = (value, { context = "The provided value" } = {}) => {
 
     let callResult = Reflect.construct(value, args);
 
-    callResult = conversions["any"](callResult, { context: context });
+    callResult = conversions["any"](callResult, { context: context, globals: globalObject });
 
     return callResult;
   };
@@ -309,24 +305,24 @@ exports.is = value => {
 exports.isImpl = value => {
   return utils.isObject(value) && value instanceof Impl.implementation;
 };
-exports.convert = (value, { context = "The provided value" } = {}) => {
+exports.convert = (globalObject, value, { context = "The provided value" } = {}) => {
   if (exports.is(value)) {
     return utils.implForWrapper(value);
   }
-  throw new TypeError(`${context} is not of type 'URL'.`);
+  throw new globalObject.TypeError(`${context} is not of type 'URL'.`);
 };
 
-function makeWrapper(globalObject) {
-  if (globalObject[ctorRegistrySymbol] === undefined) {
-    throw new Error("Internal error: invalid global object");
+function makeWrapper(globalObject, newTarget) {
+  let proto;
+  if (newTarget !== undefined) {
+    proto = newTarget.prototype;
   }
 
-  const ctor = globalObject[ctorRegistrySymbol]["URL"];
-  if (ctor === undefined) {
-    throw new Error("Internal error: constructor URL is not installed on the passed global object");
+  if (!utils.isObject(proto)) {
+    proto = globalObject[ctorRegistrySymbol]["URL"].prototype;
   }
 
-  return Object.create(ctor.prototype);
+  return Object.create(proto);
 }
 
 exports.create = (globalObject, constructorArgs, privateData) => {
@@ -357,8 +353,8 @@ exports.setup = (wrapper, globalObject, constructorArgs = [], privateData = {}) 
   return wrapper;
 };
 
-exports.new = globalObject => {
-  const wrapper = makeWrapper(globalObject);
+exports.new = (globalObject, newTarget) => {
+  const wrapper = makeWrapper(globalObject, newTarget);
 
   exports._internalSetup(wrapper, globalObject);
   Object.defineProperty(wrapper, implSymbol, {
@@ -379,23 +375,31 @@ exports.install = (globalObject, globalNames) => {
   if (!globalNames.some(globalName => exposed.has(globalName))) {
     return;
   }
+
+  const ctorRegistry = utils.initCtorRegistry(globalObject);
   class URL {
     constructor(url) {
       if (arguments.length < 1) {
-        throw new TypeError(
-          "Failed to construct 'URL': 1 argument required, but only " + arguments.length + " present."
+        throw new globalObject.TypeError(
+          `Failed to construct 'URL': 1 argument required, but only ${arguments.length} present.`
         );
       }
       const args = [];
       {
         let curArg = arguments[0];
-        curArg = conversions["USVString"](curArg, { context: "Failed to construct 'URL': parameter 1" });
+        curArg = conversions["USVString"](curArg, {
+          context: "Failed to construct 'URL': parameter 1",
+          globals: globalObject
+        });
         args.push(curArg);
       }
       {
         let curArg = arguments[1];
         if (curArg !== undefined) {
-          curArg = conversions["USVString"](curArg, { context: "Failed to construct 'URL': parameter 2" });
+          curArg = conversions["USVString"](curArg, {
+            context: "Failed to construct 'URL': parameter 2",
+            globals: globalObject
+          });
         }
         args.push(curArg);
       }
@@ -405,7 +409,7 @@ exports.install = (globalObject, globalNames) => {
     toJSON() {
       const esValue = this !== null && this !== undefined ? this : globalObject;
       if (!exports.is(esValue)) {
-        throw new TypeError("'toJSON' called on an object that is not a valid instance of URL.");
+        throw new globalObject.TypeError("'toJSON' called on an object that is not a valid instance of URL.");
       }
 
       return esValue[implSymbol].toJSON();
@@ -415,7 +419,7 @@ exports.install = (globalObject, globalNames) => {
       const esValue = this !== null && this !== undefined ? this : globalObject;
 
       if (!exports.is(esValue)) {
-        throw new TypeError("'get href' called on an object that is not a valid instance of URL.");
+        throw new globalObject.TypeError("'get href' called on an object that is not a valid instance of URL.");
       }
 
       return esValue[implSymbol]["href"];
@@ -425,10 +429,13 @@ exports.install = (globalObject, globalNames) => {
       const esValue = this !== null && this !== undefined ? this : globalObject;
 
       if (!exports.is(esValue)) {
-        throw new TypeError("'set href' called on an object that is not a valid instance of URL.");
+        throw new globalObject.TypeError("'set href' called on an object that is not a valid instance of URL.");
       }
 
-      V = conversions["USVString"](V, { context: "Failed to set the 'href' property on 'URL': The provided value" });
+      V = conversions["USVString"](V, {
+        context: "Failed to set the 'href' property on 'URL': The provided value",
+        globals: globalObject
+      });
 
       esValue[implSymbol]["href"] = V;
     }
@@ -436,7 +443,7 @@ exports.install = (globalObject, globalNames) => {
     toString() {
       const esValue = this;
       if (!exports.is(esValue)) {
-        throw new TypeError("'toString' called on an object that is not a valid instance of URL.");
+        throw new globalObject.TypeError("'toString' called on an object that is not a valid instance of URL.");
       }
 
       return esValue[implSymbol]["href"];
@@ -446,7 +453,7 @@ exports.install = (globalObject, globalNames) => {
       const esValue = this !== null && this !== undefined ? this : globalObject;
 
       if (!exports.is(esValue)) {
-        throw new TypeError("'get origin' called on an object that is not a valid instance of URL.");
+        throw new globalObject.TypeError("'get origin' called on an object that is not a valid instance of URL.");
       }
 
       return esValue[implSymbol]["origin"];
@@ -456,7 +463,7 @@ exports.install = (globalObject, globalNames) => {
       const esValue = this !== null && this !== undefined ? this : globalObject;
 
       if (!exports.is(esValue)) {
-        throw new TypeError("'get protocol' called on an object that is not a valid instance of URL.");
+        throw new globalObject.TypeError("'get protocol' called on an object that is not a valid instance of URL.");
       }
 
       return esValue[implSymbol]["protocol"];
@@ -466,11 +473,12 @@ exports.install = (globalObject, globalNames) => {
       const esValue = this !== null && this !== undefined ? this : globalObject;
 
       if (!exports.is(esValue)) {
-        throw new TypeError("'set protocol' called on an object that is not a valid instance of URL.");
+        throw new globalObject.TypeError("'set protocol' called on an object that is not a valid instance of URL.");
       }
 
       V = conversions["USVString"](V, {
-        context: "Failed to set the 'protocol' property on 'URL': The provided value"
+        context: "Failed to set the 'protocol' property on 'URL': The provided value",
+        globals: globalObject
       });
 
       esValue[implSymbol]["protocol"] = V;
@@ -480,7 +488,7 @@ exports.install = (globalObject, globalNames) => {
       const esValue = this !== null && this !== undefined ? this : globalObject;
 
       if (!exports.is(esValue)) {
-        throw new TypeError("'get username' called on an object that is not a valid instance of URL.");
+        throw new globalObject.TypeError("'get username' called on an object that is not a valid instance of URL.");
       }
 
       return esValue[implSymbol]["username"];
@@ -490,11 +498,12 @@ exports.install = (globalObject, globalNames) => {
       const esValue = this !== null && this !== undefined ? this : globalObject;
 
       if (!exports.is(esValue)) {
-        throw new TypeError("'set username' called on an object that is not a valid instance of URL.");
+        throw new globalObject.TypeError("'set username' called on an object that is not a valid instance of URL.");
       }
 
       V = conversions["USVString"](V, {
-        context: "Failed to set the 'username' property on 'URL': The provided value"
+        context: "Failed to set the 'username' property on 'URL': The provided value",
+        globals: globalObject
       });
 
       esValue[implSymbol]["username"] = V;
@@ -504,7 +513,7 @@ exports.install = (globalObject, globalNames) => {
       const esValue = this !== null && this !== undefined ? this : globalObject;
 
       if (!exports.is(esValue)) {
-        throw new TypeError("'get password' called on an object that is not a valid instance of URL.");
+        throw new globalObject.TypeError("'get password' called on an object that is not a valid instance of URL.");
       }
 
       return esValue[implSymbol]["password"];
@@ -514,11 +523,12 @@ exports.install = (globalObject, globalNames) => {
       const esValue = this !== null && this !== undefined ? this : globalObject;
 
       if (!exports.is(esValue)) {
-        throw new TypeError("'set password' called on an object that is not a valid instance of URL.");
+        throw new globalObject.TypeError("'set password' called on an object that is not a valid instance of URL.");
       }
 
       V = conversions["USVString"](V, {
-        context: "Failed to set the 'password' property on 'URL': The provided value"
+        context: "Failed to set the 'password' property on 'URL': The provided value",
+        globals: globalObject
       });
 
       esValue[implSymbol]["password"] = V;
@@ -528,7 +538,7 @@ exports.install = (globalObject, globalNames) => {
       const esValue = this !== null && this !== undefined ? this : globalObject;
 
       if (!exports.is(esValue)) {
-        throw new TypeError("'get host' called on an object that is not a valid instance of URL.");
+        throw new globalObject.TypeError("'get host' called on an object that is not a valid instance of URL.");
       }
 
       return esValue[implSymbol]["host"];
@@ -538,10 +548,13 @@ exports.install = (globalObject, globalNames) => {
       const esValue = this !== null && this !== undefined ? this : globalObject;
 
       if (!exports.is(esValue)) {
-        throw new TypeError("'set host' called on an object that is not a valid instance of URL.");
+        throw new globalObject.TypeError("'set host' called on an object that is not a valid instance of URL.");
       }
 
-      V = conversions["USVString"](V, { context: "Failed to set the 'host' property on 'URL': The provided value" });
+      V = conversions["USVString"](V, {
+        context: "Failed to set the 'host' property on 'URL': The provided value",
+        globals: globalObject
+      });
 
       esValue[implSymbol]["host"] = V;
     }
@@ -550,7 +563,7 @@ exports.install = (globalObject, globalNames) => {
       const esValue = this !== null && this !== undefined ? this : globalObject;
 
       if (!exports.is(esValue)) {
-        throw new TypeError("'get hostname' called on an object that is not a valid instance of URL.");
+        throw new globalObject.TypeError("'get hostname' called on an object that is not a valid instance of URL.");
       }
 
       return esValue[implSymbol]["hostname"];
@@ -560,11 +573,12 @@ exports.install = (globalObject, globalNames) => {
       const esValue = this !== null && this !== undefined ? this : globalObject;
 
       if (!exports.is(esValue)) {
-        throw new TypeError("'set hostname' called on an object that is not a valid instance of URL.");
+        throw new globalObject.TypeError("'set hostname' called on an object that is not a valid instance of URL.");
       }
 
       V = conversions["USVString"](V, {
-        context: "Failed to set the 'hostname' property on 'URL': The provided value"
+        context: "Failed to set the 'hostname' property on 'URL': The provided value",
+        globals: globalObject
       });
 
       esValue[implSymbol]["hostname"] = V;
@@ -574,7 +588,7 @@ exports.install = (globalObject, globalNames) => {
       const esValue = this !== null && this !== undefined ? this : globalObject;
 
       if (!exports.is(esValue)) {
-        throw new TypeError("'get port' called on an object that is not a valid instance of URL.");
+        throw new globalObject.TypeError("'get port' called on an object that is not a valid instance of URL.");
       }
 
       return esValue[implSymbol]["port"];
@@ -584,10 +598,13 @@ exports.install = (globalObject, globalNames) => {
       const esValue = this !== null && this !== undefined ? this : globalObject;
 
       if (!exports.is(esValue)) {
-        throw new TypeError("'set port' called on an object that is not a valid instance of URL.");
+        throw new globalObject.TypeError("'set port' called on an object that is not a valid instance of URL.");
       }
 
-      V = conversions["USVString"](V, { context: "Failed to set the 'port' property on 'URL': The provided value" });
+      V = conversions["USVString"](V, {
+        context: "Failed to set the 'port' property on 'URL': The provided value",
+        globals: globalObject
+      });
 
       esValue[implSymbol]["port"] = V;
     }
@@ -596,7 +613,7 @@ exports.install = (globalObject, globalNames) => {
       const esValue = this !== null && this !== undefined ? this : globalObject;
 
       if (!exports.is(esValue)) {
-        throw new TypeError("'get pathname' called on an object that is not a valid instance of URL.");
+        throw new globalObject.TypeError("'get pathname' called on an object that is not a valid instance of URL.");
       }
 
       return esValue[implSymbol]["pathname"];
@@ -606,11 +623,12 @@ exports.install = (globalObject, globalNames) => {
       const esValue = this !== null && this !== undefined ? this : globalObject;
 
       if (!exports.is(esValue)) {
-        throw new TypeError("'set pathname' called on an object that is not a valid instance of URL.");
+        throw new globalObject.TypeError("'set pathname' called on an object that is not a valid instance of URL.");
       }
 
       V = conversions["USVString"](V, {
-        context: "Failed to set the 'pathname' property on 'URL': The provided value"
+        context: "Failed to set the 'pathname' property on 'URL': The provided value",
+        globals: globalObject
       });
 
       esValue[implSymbol]["pathname"] = V;
@@ -620,7 +638,7 @@ exports.install = (globalObject, globalNames) => {
       const esValue = this !== null && this !== undefined ? this : globalObject;
 
       if (!exports.is(esValue)) {
-        throw new TypeError("'get search' called on an object that is not a valid instance of URL.");
+        throw new globalObject.TypeError("'get search' called on an object that is not a valid instance of URL.");
       }
 
       return esValue[implSymbol]["search"];
@@ -630,10 +648,13 @@ exports.install = (globalObject, globalNames) => {
       const esValue = this !== null && this !== undefined ? this : globalObject;
 
       if (!exports.is(esValue)) {
-        throw new TypeError("'set search' called on an object that is not a valid instance of URL.");
+        throw new globalObject.TypeError("'set search' called on an object that is not a valid instance of URL.");
       }
 
-      V = conversions["USVString"](V, { context: "Failed to set the 'search' property on 'URL': The provided value" });
+      V = conversions["USVString"](V, {
+        context: "Failed to set the 'search' property on 'URL': The provided value",
+        globals: globalObject
+      });
 
       esValue[implSymbol]["search"] = V;
     }
@@ -642,7 +663,7 @@ exports.install = (globalObject, globalNames) => {
       const esValue = this !== null && this !== undefined ? this : globalObject;
 
       if (!exports.is(esValue)) {
-        throw new TypeError("'get searchParams' called on an object that is not a valid instance of URL.");
+        throw new globalObject.TypeError("'get searchParams' called on an object that is not a valid instance of URL.");
       }
 
       return utils.getSameObject(this, "searchParams", () => {
@@ -654,7 +675,7 @@ exports.install = (globalObject, globalNames) => {
       const esValue = this !== null && this !== undefined ? this : globalObject;
 
       if (!exports.is(esValue)) {
-        throw new TypeError("'get hash' called on an object that is not a valid instance of URL.");
+        throw new globalObject.TypeError("'get hash' called on an object that is not a valid instance of URL.");
       }
 
       return esValue[implSymbol]["hash"];
@@ -664,10 +685,13 @@ exports.install = (globalObject, globalNames) => {
       const esValue = this !== null && this !== undefined ? this : globalObject;
 
       if (!exports.is(esValue)) {
-        throw new TypeError("'set hash' called on an object that is not a valid instance of URL.");
+        throw new globalObject.TypeError("'set hash' called on an object that is not a valid instance of URL.");
       }
 
-      V = conversions["USVString"](V, { context: "Failed to set the 'hash' property on 'URL': The provided value" });
+      V = conversions["USVString"](V, {
+        context: "Failed to set the 'hash' property on 'URL': The provided value",
+        globals: globalObject
+      });
 
       esValue[implSymbol]["hash"] = V;
     }
@@ -689,10 +713,7 @@ exports.install = (globalObject, globalNames) => {
     hash: { enumerable: true },
     [Symbol.toStringTag]: { value: "URL", configurable: true }
   });
-  if (globalObject[ctorRegistrySymbol] === undefined) {
-    globalObject[ctorRegistrySymbol] = Object.create(null);
-  }
-  globalObject[ctorRegistrySymbol][interfaceName] = URL;
+  ctorRegistry[interfaceName] = URL;
 
   Object.defineProperty(globalObject, interfaceName, {
     configurable: true,
@@ -850,39 +871,11 @@ const conversions = require("webidl-conversions");
 const utils = require("./utils.js");
 
 const Function = require("./Function.js");
+const newObjectInRealm = utils.newObjectInRealm;
 const implSymbol = utils.implSymbol;
 const ctorRegistrySymbol = utils.ctorRegistrySymbol;
 
 const interfaceName = "URLSearchParams";
-
-const IteratorPrototype = Object.create(utils.IteratorPrototype, {
-  next: {
-    value: function next() {
-      const internal = this && this[utils.iterInternalSymbol];
-      if (!internal) {
-        throw new TypeError("next() called on a value that is not an iterator prototype object");
-      }
-
-      const { target, kind, index } = internal;
-      const values = Array.from(target[implSymbol]);
-      const len = values.length;
-      if (index >= len) {
-        return { value: undefined, done: true };
-      }
-
-      const pair = values[index];
-      internal.index = index + 1;
-      return utils.iteratorResult(pair.map(utils.tryWrapperForImpl), kind);
-    },
-    writable: true,
-    enumerable: true,
-    configurable: true
-  },
-  [Symbol.toStringTag]: {
-    value: "URLSearchParams Iterator",
-    configurable: true
-  }
-});
 
 exports.is = value => {
   return utils.isObject(value) && utils.hasOwn(value, implSymbol) && value[implSymbol] instanceof Impl.implementation;
@@ -890,15 +883,17 @@ exports.is = value => {
 exports.isImpl = value => {
   return utils.isObject(value) && value instanceof Impl.implementation;
 };
-exports.convert = (value, { context = "The provided value" } = {}) => {
+exports.convert = (globalObject, value, { context = "The provided value" } = {}) => {
   if (exports.is(value)) {
     return utils.implForWrapper(value);
   }
-  throw new TypeError(`${context} is not of type 'URLSearchParams'.`);
+  throw new globalObject.TypeError(`${context} is not of type 'URLSearchParams'.`);
 };
 
-exports.createDefaultIterator = (target, kind) => {
-  const iterator = Object.create(IteratorPrototype);
+exports.createDefaultIterator = (globalObject, target, kind) => {
+  const ctorRegistry = globalObject[ctorRegistrySymbol];
+  const iteratorPrototype = ctorRegistry["URLSearchParams Iterator"];
+  const iterator = Object.create(iteratorPrototype);
   Object.defineProperty(iterator, utils.iterInternalSymbol, {
     value: { target, kind, index: 0 },
     configurable: true
@@ -906,17 +901,17 @@ exports.createDefaultIterator = (target, kind) => {
   return iterator;
 };
 
-function makeWrapper(globalObject) {
-  if (globalObject[ctorRegistrySymbol] === undefined) {
-    throw new Error("Internal error: invalid global object");
+function makeWrapper(globalObject, newTarget) {
+  let proto;
+  if (newTarget !== undefined) {
+    proto = newTarget.prototype;
   }
 
-  const ctor = globalObject[ctorRegistrySymbol]["URLSearchParams"];
-  if (ctor === undefined) {
-    throw new Error("Internal error: constructor URLSearchParams is not installed on the passed global object");
+  if (!utils.isObject(proto)) {
+    proto = globalObject[ctorRegistrySymbol]["URLSearchParams"].prototype;
   }
 
-  return Object.create(ctor.prototype);
+  return Object.create(proto);
 }
 
 exports.create = (globalObject, constructorArgs, privateData) => {
@@ -947,8 +942,8 @@ exports.setup = (wrapper, globalObject, constructorArgs = [], privateData = {}) 
   return wrapper;
 };
 
-exports.new = globalObject => {
-  const wrapper = makeWrapper(globalObject);
+exports.new = (globalObject, newTarget) => {
+  const wrapper = makeWrapper(globalObject, newTarget);
 
   exports._internalSetup(wrapper, globalObject);
   Object.defineProperty(wrapper, implSymbol, {
@@ -969,6 +964,8 @@ exports.install = (globalObject, globalNames) => {
   if (!globalNames.some(globalName => exposed.has(globalName))) {
     return;
   }
+
+  const ctorRegistry = utils.initCtorRegistry(globalObject);
   class URLSearchParams {
     constructor() {
       const args = [];
@@ -978,7 +975,7 @@ exports.install = (globalObject, globalNames) => {
           if (utils.isObject(curArg)) {
             if (curArg[Symbol.iterator] !== undefined) {
               if (!utils.isObject(curArg)) {
-                throw new TypeError(
+                throw new globalObject.TypeError(
                   "Failed to construct 'URLSearchParams': parameter 1" + " sequence" + " is not an iterable object."
                 );
               } else {
@@ -986,7 +983,7 @@ exports.install = (globalObject, globalNames) => {
                 const tmp = curArg;
                 for (let nextItem of tmp) {
                   if (!utils.isObject(nextItem)) {
-                    throw new TypeError(
+                    throw new globalObject.TypeError(
                       "Failed to construct 'URLSearchParams': parameter 1" +
                         " sequence" +
                         "'s element" +
@@ -1001,7 +998,8 @@ exports.install = (globalObject, globalNames) => {
                           "Failed to construct 'URLSearchParams': parameter 1" +
                           " sequence" +
                           "'s element" +
-                          "'s element"
+                          "'s element",
+                        globals: globalObject
                       });
 
                       V.push(nextItem);
@@ -1015,7 +1013,7 @@ exports.install = (globalObject, globalNames) => {
               }
             } else {
               if (!utils.isObject(curArg)) {
-                throw new TypeError(
+                throw new globalObject.TypeError(
                   "Failed to construct 'URLSearchParams': parameter 1" + " record" + " is not an object."
                 );
               } else {
@@ -1026,13 +1024,15 @@ exports.install = (globalObject, globalNames) => {
                     let typedKey = key;
 
                     typedKey = conversions["USVString"](typedKey, {
-                      context: "Failed to construct 'URLSearchParams': parameter 1" + " record" + "'s key"
+                      context: "Failed to construct 'URLSearchParams': parameter 1" + " record" + "'s key",
+                      globals: globalObject
                     });
 
                     let typedValue = curArg[key];
 
                     typedValue = conversions["USVString"](typedValue, {
-                      context: "Failed to construct 'URLSearchParams': parameter 1" + " record" + "'s value"
+                      context: "Failed to construct 'URLSearchParams': parameter 1" + " record" + "'s value",
+                      globals: globalObject
                     });
 
                     result[typedKey] = typedValue;
@@ -1043,7 +1043,8 @@ exports.install = (globalObject, globalNames) => {
             }
           } else {
             curArg = conversions["USVString"](curArg, {
-              context: "Failed to construct 'URLSearchParams': parameter 1"
+              context: "Failed to construct 'URLSearchParams': parameter 1",
+              globals: globalObject
             });
           }
         } else {
@@ -1057,76 +1058,78 @@ exports.install = (globalObject, globalNames) => {
     append(name, value) {
       const esValue = this !== null && this !== undefined ? this : globalObject;
       if (!exports.is(esValue)) {
-        throw new TypeError("'append' called on an object that is not a valid instance of URLSearchParams.");
+        throw new globalObject.TypeError(
+          "'append' called on an object that is not a valid instance of URLSearchParams."
+        );
       }
 
       if (arguments.length < 2) {
-        throw new TypeError(
-          "Failed to execute 'append' on 'URLSearchParams': 2 arguments required, but only " +
-            arguments.length +
-            " present."
+        throw new globalObject.TypeError(
+          `Failed to execute 'append' on 'URLSearchParams': 2 arguments required, but only ${arguments.length} present.`
         );
       }
       const args = [];
       {
         let curArg = arguments[0];
         curArg = conversions["USVString"](curArg, {
-          context: "Failed to execute 'append' on 'URLSearchParams': parameter 1"
+          context: "Failed to execute 'append' on 'URLSearchParams': parameter 1",
+          globals: globalObject
         });
         args.push(curArg);
       }
       {
         let curArg = arguments[1];
         curArg = conversions["USVString"](curArg, {
-          context: "Failed to execute 'append' on 'URLSearchParams': parameter 2"
+          context: "Failed to execute 'append' on 'URLSearchParams': parameter 2",
+          globals: globalObject
         });
         args.push(curArg);
       }
-      return esValue[implSymbol].append(...args);
+      return utils.tryWrapperForImpl(esValue[implSymbol].append(...args));
     }
 
     delete(name) {
       const esValue = this !== null && this !== undefined ? this : globalObject;
       if (!exports.is(esValue)) {
-        throw new TypeError("'delete' called on an object that is not a valid instance of URLSearchParams.");
+        throw new globalObject.TypeError(
+          "'delete' called on an object that is not a valid instance of URLSearchParams."
+        );
       }
 
       if (arguments.length < 1) {
-        throw new TypeError(
-          "Failed to execute 'delete' on 'URLSearchParams': 1 argument required, but only " +
-            arguments.length +
-            " present."
+        throw new globalObject.TypeError(
+          `Failed to execute 'delete' on 'URLSearchParams': 1 argument required, but only ${arguments.length} present.`
         );
       }
       const args = [];
       {
         let curArg = arguments[0];
         curArg = conversions["USVString"](curArg, {
-          context: "Failed to execute 'delete' on 'URLSearchParams': parameter 1"
+          context: "Failed to execute 'delete' on 'URLSearchParams': parameter 1",
+          globals: globalObject
         });
         args.push(curArg);
       }
-      return esValue[implSymbol].delete(...args);
+      return utils.tryWrapperForImpl(esValue[implSymbol].delete(...args));
     }
 
     get(name) {
       const esValue = this !== null && this !== undefined ? this : globalObject;
       if (!exports.is(esValue)) {
-        throw new TypeError("'get' called on an object that is not a valid instance of URLSearchParams.");
+        throw new globalObject.TypeError("'get' called on an object that is not a valid instance of URLSearchParams.");
       }
 
       if (arguments.length < 1) {
-        throw new TypeError(
-          "Failed to execute 'get' on 'URLSearchParams': 1 argument required, but only " +
-            arguments.length +
-            " present."
+        throw new globalObject.TypeError(
+          `Failed to execute 'get' on 'URLSearchParams': 1 argument required, but only ${arguments.length} present.`
         );
       }
       const args = [];
       {
         let curArg = arguments[0];
         curArg = conversions["USVString"](curArg, {
-          context: "Failed to execute 'get' on 'URLSearchParams': parameter 1"
+          context: "Failed to execute 'get' on 'URLSearchParams': parameter 1",
+          globals: globalObject
         });
         args.push(curArg);
       }
@@ -1136,21 +1139,22 @@ exports.install = (globalObject, globalNames) => {
     getAll(name) {
       const esValue = this !== null && this !== undefined ? this : globalObject;
       if (!exports.is(esValue)) {
-        throw new TypeError("'getAll' called on an object that is not a valid instance of URLSearchParams.");
+        throw new globalObject.TypeError(
+          "'getAll' called on an object that is not a valid instance of URLSearchParams."
+        );
       }
 
       if (arguments.length < 1) {
-        throw new TypeError(
-          "Failed to execute 'getAll' on 'URLSearchParams': 1 argument required, but only " +
-            arguments.length +
-            " present."
+        throw new globalObject.TypeError(
+          `Failed to execute 'getAll' on 'URLSearchParams': 1 argument required, but only ${arguments.length} present.`
         );
       }
       const args = [];
       {
         let curArg = arguments[0];
         curArg = conversions["USVString"](curArg, {
-          context: "Failed to execute 'getAll' on 'URLSearchParams': parameter 1"
+          context: "Failed to execute 'getAll' on 'URLSearchParams': parameter 1",
+          globals: globalObject
         });
         args.push(curArg);
       }
@@ -1160,21 +1164,20 @@ exports.install = (globalObject, globalNames) => {
     has(name) {
       const esValue = this !== null && this !== undefined ? this : globalObject;
       if (!exports.is(esValue)) {
-        throw new TypeError("'has' called on an object that is not a valid instance of URLSearchParams.");
+        throw new globalObject.TypeError("'has' called on an object that is not a valid instance of URLSearchParams.");
       }
 
       if (arguments.length < 1) {
-        throw new TypeError(
-          "Failed to execute 'has' on 'URLSearchParams': 1 argument required, but only " +
-            arguments.length +
-            " present."
+        throw new globalObject.TypeError(
+          `Failed to execute 'has' on 'URLSearchParams': 1 argument required, but only ${arguments.length} present.`
         );
       }
       const args = [];
       {
         let curArg = arguments[0];
         curArg = conversions["USVString"](curArg, {
-          context: "Failed to execute 'has' on 'URLSearchParams': parameter 1"
+          context: "Failed to execute 'has' on 'URLSearchParams': parameter 1",
+          globals: globalObject
         });
         args.push(curArg);
       }
@@ -1184,47 +1187,49 @@ exports.install = (globalObject, globalNames) => {
     set(name, value) {
       const esValue = this !== null && this !== undefined ? this : globalObject;
       if (!exports.is(esValue)) {
-        throw new TypeError("'set' called on an object that is not a valid instance of URLSearchParams.");
+        throw new globalObject.TypeError("'set' called on an object that is not a valid instance of URLSearchParams.");
       }
 
       if (arguments.length < 2) {
-        throw new TypeError(
-          "Failed to execute 'set' on 'URLSearchParams': 2 arguments required, but only " +
-            arguments.length +
-            " present."
+        throw new globalObject.TypeError(
+          `Failed to execute 'set' on 'URLSearchParams': 2 arguments required, but only ${arguments.length} present.`
         );
       }
       const args = [];
       {
         let curArg = arguments[0];
         curArg = conversions["USVString"](curArg, {
-          context: "Failed to execute 'set' on 'URLSearchParams': parameter 1"
+          context: "Failed to execute 'set' on 'URLSearchParams': parameter 1",
+          globals: globalObject
         });
         args.push(curArg);
       }
       {
         let curArg = arguments[1];
         curArg = conversions["USVString"](curArg, {
-          context: "Failed to execute 'set' on 'URLSearchParams': parameter 2"
+          context: "Failed to execute 'set' on 'URLSearchParams': parameter 2",
+          globals: globalObject
         });
         args.push(curArg);
       }
-      return esValue[implSymbol].set(...args);
+      return utils.tryWrapperForImpl(esValue[implSymbol].set(...args));
     }
 
     sort() {
       const esValue = this !== null && this !== undefined ? this : globalObject;
       if (!exports.is(esValue)) {
-        throw new TypeError("'sort' called on an object that is not a valid instance of URLSearchParams.");
+        throw new globalObject.TypeError("'sort' called on an object that is not a valid instance of URLSearchParams.");
       }
 
-      return esValue[implSymbol].sort();
+      return utils.tryWrapperForImpl(esValue[implSymbol].sort());
     }
 
     toString() {
       const esValue = this !== null && this !== undefined ? this : globalObject;
       if (!exports.is(esValue)) {
-        throw new TypeError("'toString' called on an object that is not a valid instance of URLSearchParams.");
+        throw new globalObject.TypeError(
+          "'toString' called on an object that is not a valid instance of URLSearchParams."
+        );
       }
 
       return esValue[implSymbol].toString();
@@ -1232,33 +1237,41 @@ exports.install = (globalObject, globalNames) => {
 
     keys() {
       if (!exports.is(this)) {
-        throw new TypeError("'keys' called on an object that is not a valid instance of URLSearchParams.");
+        throw new globalObject.TypeError("'keys' called on an object that is not a valid instance of URLSearchParams.");
       }
-      return exports.createDefaultIterator(this, "key");
+      return exports.createDefaultIterator(globalObject, this, "key");
     }
 
     values() {
       if (!exports.is(this)) {
-        throw new TypeError("'values' called on an object that is not a valid instance of URLSearchParams.");
+        throw new globalObject.TypeError(
+          "'values' called on an object that is not a valid instance of URLSearchParams."
+        );
       }
-      return exports.createDefaultIterator(this, "value");
+      return exports.createDefaultIterator(globalObject, this, "value");
     }
 
     entries() {
       if (!exports.is(this)) {
-        throw new TypeError("'entries' called on an object that is not a valid instance of URLSearchParams.");
+        throw new globalObject.TypeError(
+          "'entries' called on an object that is not a valid instance of URLSearchParams."
+        );
       }
-      return exports.createDefaultIterator(this, "key+value");
+      return exports.createDefaultIterator(globalObject, this, "key+value");
     }
 
     forEach(callback) {
       if (!exports.is(this)) {
-        throw new TypeError("'forEach' called on an object that is not a valid instance of URLSearchParams.");
+        throw new globalObject.TypeError(
+          "'forEach' called on an object that is not a valid instance of URLSearchParams."
+        );
       }
       if (arguments.length < 1) {
-        throw new TypeError("Failed to execute 'forEach' on 'iterable': 1 argument required, " + "but only 0 present.");
+        throw new globalObject.TypeError(
+          "Failed to execute 'forEach' on 'iterable': 1 argument required, but only 0 present."
+        );
       }
-      callback = Function.convert(callback, {
+      callback = Function.convert(globalObject, callback, {
         context: "Failed to execute 'forEach' on 'iterable': The callback provided as parameter 1"
       });
       const thisArg = arguments[1];
@@ -1288,10 +1301,33 @@ exports.install = (globalObject, globalNames) => {
     [Symbol.toStringTag]: { value: "URLSearchParams", configurable: true },
     [Symbol.iterator]: { value: URLSearchParams.prototype.entries, configurable: true, writable: true }
   });
-  if (globalObject[ctorRegistrySymbol] === undefined) {
-    globalObject[ctorRegistrySymbol] = Object.create(null);
-  }
-  globalObject[ctorRegistrySymbol][interfaceName] = URLSearchParams;
+  ctorRegistry[interfaceName] = URLSearchParams;
+
+  ctorRegistry["URLSearchParams Iterator"] = Object.create(ctorRegistry["%IteratorPrototype%"], {
+    [Symbol.toStringTag]: {
+      configurable: true,
+      value: "URLSearchParams Iterator"
+    }
+  });
+  utils.define(ctorRegistry["URLSearchParams Iterator"], {
+    next() {
+      const internal = this && this[utils.iterInternalSymbol];
+      if (!internal) {
+        throw new globalObject.TypeError("next() called on a value that is not a URLSearchParams iterator object");
+      }
+
+      const { target, kind, index } = internal;
+      const values = Array.from(target[implSymbol]);
+      const len = values.length;
+      if (index >= len) {
+        return newObjectInRealm(globalObject, { value: undefined, done: true });
+      }
+
+      const pair = values[index];
+      internal.index = index + 1;
+      return newObjectInRealm(globalObject, utils.iteratorResult(pair.map(utils.tryWrapperForImpl), kind));
+    }
+  });
 
   Object.defineProperty(globalObject, interfaceName, {
     configurable: true,
@@ -2841,15 +2877,65 @@ module.exports = {
 
 // Returns "Type(value) is Object" in ES terminology.
 function isObject(value) {
-  return typeof value === "object" && value !== null || typeof value === "function";
+  return (typeof value === "object" && value !== null) || typeof value === "function";
 }
 
 const hasOwn = Function.prototype.call.bind(Object.prototype.hasOwnProperty);
 
+// Like `Object.assign`, but using `[[GetOwnProperty]]` and `[[DefineOwnProperty]]`
+// instead of `[[Get]]` and `[[Set]]` and only allowing objects
+function define(target, source) {
+  for (const key of Reflect.ownKeys(source)) {
+    const descriptor = Reflect.getOwnPropertyDescriptor(source, key);
+    if (descriptor && !Reflect.defineProperty(target, key, descriptor)) {
+      throw new TypeError(`Cannot redefine property: ${String(key)}`);
+    }
+  }
+}
+
+function newObjectInRealm(globalObject, object) {
+  const ctorRegistry = initCtorRegistry(globalObject);
+  return Object.defineProperties(
+    Object.create(ctorRegistry["%Object.prototype%"]),
+    Object.getOwnPropertyDescriptors(object)
+  );
+}
+
 const wrapperSymbol = Symbol("wrapper");
 const implSymbol = Symbol("impl");
 const sameObjectCaches = Symbol("SameObject caches");
-const ctorRegistrySymbol = Symbol.for("[webidl2js]  constructor registry");
+const ctorRegistrySymbol = Symbol.for("[webidl2js] constructor registry");
+
+const AsyncIteratorPrototype = Object.getPrototypeOf(Object.getPrototypeOf(async function* () {}).prototype);
+
+function initCtorRegistry(globalObject) {
+  if (hasOwn(globalObject, ctorRegistrySymbol)) {
+    return globalObject[ctorRegistrySymbol];
+  }
+
+  const ctorRegistry = Object.create(null);
+
+  // In addition to registering all the WebIDL2JS-generated types in the constructor registry,
+  // we also register a few intrinsics that we make use of in generated code, since they are not
+  // easy to grab from the globalObject variable.
+  ctorRegistry["%Object.prototype%"] = globalObject.Object.prototype;
+  ctorRegistry["%IteratorPrototype%"] = Object.getPrototypeOf(
+    Object.getPrototypeOf(new globalObject.Array()[Symbol.iterator]())
+  );
+
+  try {
+    ctorRegistry["%AsyncIteratorPrototype%"] = Object.getPrototypeOf(
+      Object.getPrototypeOf(
+        globalObject.eval("(async function* () {})").prototype
+      )
+    );
+  } catch {
+    ctorRegistry["%AsyncIteratorPrototype%"] = AsyncIteratorPrototype;
+  }
+
+  globalObject[ctorRegistrySymbol] = ctorRegistry;
+  return ctorRegistry;
+}
 
 function getSameObject(wrapper, prop, creator) {
   if (!wrapper[sameObjectCaches]) {
@@ -2883,15 +2969,13 @@ function tryImplForWrapper(wrapper) {
 }
 
 const iterInternalSymbol = Symbol("internal");
-const IteratorPrototype = Object.getPrototypeOf(Object.getPrototypeOf([][Symbol.iterator]()));
-const AsyncIteratorPrototype = Object.getPrototypeOf(Object.getPrototypeOf(async function* () {}).prototype);
 
 function isArrayIndexPropName(P) {
   if (typeof P !== "string") {
     return false;
   }
   const i = P >>> 0;
-  if (i === Math.pow(2, 32) - 1) {
+  if (i === 2 ** 32 - 1) {
     return false;
   }
   const s = `${i}`;
@@ -2948,17 +3032,18 @@ const asyncIteratorEOI = Symbol("async iterator end of iteration");
 module.exports = exports = {
   isObject,
   hasOwn,
+  define,
+  newObjectInRealm,
   wrapperSymbol,
   implSymbol,
   getSameObject,
   ctorRegistrySymbol,
+  initCtorRegistry,
   wrapperForImpl,
   implForWrapper,
   tryWrapperForImpl,
   tryImplForWrapper,
   iterInternalSymbol,
-  IteratorPrototype,
-  AsyncIteratorPrototype,
   isArrayBuffer,
   isArrayIndexPropName,
   supportsPropertyIndex,
