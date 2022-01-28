@@ -1227,10 +1227,10 @@ var whatwgURL = (() => {
         return string.length === 2 && infra.isASCIIAlpha(string.codePointAt(0)) && string[1] === ":";
       }
       function containsForbiddenHostCodePoint(string) {
-        return string.search(/\u0000|\u0009|\u000A|\u000D|\u0020|#|%|\/|:|<|>|\?|@|\[|\\|\]|\^|\|/u) !== -1;
-      }
-      function containsForbiddenHostCodePointExcludingPercent(string) {
         return string.search(/\u0000|\u0009|\u000A|\u000D|\u0020|#|\/|:|<|>|\?|@|\[|\\|\]|\^|\|/u) !== -1;
+      }
+      function containsForbiddenDomainCodePoint(string) {
+        return containsForbiddenHostCodePoint(string) || string.search(/[\u0000-\u001F]|%|\u007F/u) !== -1;
       }
       function isSpecialScheme(scheme) {
         return specialSchemes[scheme] !== void 0;
@@ -1460,7 +1460,7 @@ var whatwgURL = (() => {
         if (asciiDomain === failure) {
           return failure;
         }
-        if (containsForbiddenHostCodePoint(asciiDomain)) {
+        if (containsForbiddenDomainCodePoint(asciiDomain)) {
           return failure;
         }
         if (endsInANumber(asciiDomain)) {
@@ -1486,7 +1486,7 @@ var whatwgURL = (() => {
         return false;
       }
       function parseOpaqueHost(input) {
-        if (containsForbiddenHostCodePointExcludingPercent(input)) {
+        if (containsForbiddenHostCodePoint(input)) {
           return failure;
         }
         return utf8PercentEncodeString(input, isC0ControlPercentEncode);
