@@ -1,6 +1,8 @@
+"use strict";
 var whatwgURL = (() => {
+  var __getOwnPropNames = Object.getOwnPropertyNames;
   var __commonJS = (cb, mod) => function __require() {
-    return mod || (0, cb[Object.keys(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
+    return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
   };
 
   // node_modules/webidl-conversions/lib/index.js
@@ -64,7 +66,11 @@ var whatwgURL = (() => {
             }
             x = integerPart(x);
             if (x < lowerBound || x > upperBound) {
-              throw makeException(TypeError, `is outside the accepted range of ${lowerBound} to ${upperBound}, inclusive`, options);
+              throw makeException(
+                TypeError,
+                `is outside the accepted range of ${lowerBound} to ${upperBound}, inclusive`,
+                options
+              );
             }
             return x;
           }
@@ -100,7 +106,11 @@ var whatwgURL = (() => {
             }
             x = integerPart(x);
             if (x < lowerBound || x > upperBound) {
-              throw makeException(TypeError, `is outside the accepted range of ${lowerBound} to ${upperBound}, inclusive`, options);
+              throw makeException(
+                TypeError,
+                `is outside the accepted range of ${lowerBound} to ${upperBound}, inclusive`,
+                options
+              );
             }
             return x;
           }
@@ -274,7 +284,10 @@ var whatwgURL = (() => {
         }
         return value;
       };
-      var typedArrayNameGetter = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(Uint8Array).prototype, Symbol.toStringTag).get;
+      var typedArrayNameGetter = Object.getOwnPropertyDescriptor(
+        Object.getPrototypeOf(Uint8Array).prototype,
+        Symbol.toStringTag
+      ).get;
       [
         Int8Array,
         Int16Array,
@@ -356,7 +369,10 @@ var whatwgURL = (() => {
       }
       function newObjectInRealm(globalObject, object) {
         const ctorRegistry = initCtorRegistry(globalObject);
-        return Object.defineProperties(Object.create(ctorRegistry["%Object.prototype%"]), Object.getOwnPropertyDescriptors(object));
+        return Object.defineProperties(
+          Object.create(ctorRegistry["%Object.prototype%"]),
+          Object.getOwnPropertyDescriptors(object)
+        );
       }
       var wrapperSymbol = Symbol("wrapper");
       var implSymbol = Symbol("impl");
@@ -368,11 +384,17 @@ var whatwgURL = (() => {
         if (hasOwn(globalObject, ctorRegistrySymbol)) {
           return globalObject[ctorRegistrySymbol];
         }
-        const ctorRegistry = Object.create(null);
+        const ctorRegistry = /* @__PURE__ */ Object.create(null);
         ctorRegistry["%Object.prototype%"] = globalObject.Object.prototype;
-        ctorRegistry["%IteratorPrototype%"] = Object.getPrototypeOf(Object.getPrototypeOf(new globalObject.Array()[Symbol.iterator]()));
+        ctorRegistry["%IteratorPrototype%"] = Object.getPrototypeOf(
+          Object.getPrototypeOf(new globalObject.Array()[Symbol.iterator]())
+        );
         try {
-          ctorRegistry["%AsyncIteratorPrototype%"] = Object.getPrototypeOf(Object.getPrototypeOf(globalObject.eval("(async function* () {})").prototype));
+          ctorRegistry["%AsyncIteratorPrototype%"] = Object.getPrototypeOf(
+            Object.getPrototypeOf(
+              globalObject.eval("(async function* () {})").prototype
+            )
+          );
         } catch {
           ctorRegistry["%AsyncIteratorPrototype%"] = AsyncIteratorPrototype;
         }
@@ -381,7 +403,7 @@ var whatwgURL = (() => {
       }
       function getSameObject(wrapper, prop, creator) {
         if (!wrapper[sameObjectCaches]) {
-          wrapper[sameObjectCaches] = Object.create(null);
+          wrapper[sameObjectCaches] = /* @__PURE__ */ Object.create(null);
         }
         if (prop in wrapper[sameObjectCaches]) {
           return wrapper[sameObjectCaches][prop];
@@ -494,9 +516,9 @@ var whatwgURL = (() => {
     }
   });
 
-  // node_modules/tr46/node_modules/punycode/punycode.js
+  // node_modules/punycode/punycode.js
   var require_punycode = __commonJS({
-    "node_modules/tr46/node_modules/punycode/punycode.js"(exports, module) {
+    "node_modules/punycode/punycode.js"(exports, module) {
       "use strict";
       var maxInt = 2147483647;
       var base = 36;
@@ -677,7 +699,9 @@ var whatwgURL = (() => {
                 }
                 const qMinusT = q - t;
                 const baseMinusT = base - t;
-                output.push(stringFromCharCode(digitToBasic(t + qMinusT % baseMinusT, 0)));
+                output.push(
+                  stringFromCharCode(digitToBasic(t + qMinusT % baseMinusT, 0))
+                );
                 q = floor(qMinusT / baseMinusT);
               }
               output.push(stringFromCharCode(digitToBasic(q, 0)));
@@ -1104,30 +1128,30 @@ var whatwgURL = (() => {
       function isC0ControlPercentEncode(c) {
         return c <= 31 || c > 126;
       }
-      var extraFragmentPercentEncodeSet = new Set([p(" "), p('"'), p("<"), p(">"), p("`")]);
+      var extraFragmentPercentEncodeSet = /* @__PURE__ */ new Set([p(" "), p('"'), p("<"), p(">"), p("`")]);
       function isFragmentPercentEncode(c) {
         return isC0ControlPercentEncode(c) || extraFragmentPercentEncodeSet.has(c);
       }
-      var extraQueryPercentEncodeSet = new Set([p(" "), p('"'), p("#"), p("<"), p(">")]);
+      var extraQueryPercentEncodeSet = /* @__PURE__ */ new Set([p(" "), p('"'), p("#"), p("<"), p(">")]);
       function isQueryPercentEncode(c) {
         return isC0ControlPercentEncode(c) || extraQueryPercentEncodeSet.has(c);
       }
       function isSpecialQueryPercentEncode(c) {
         return isQueryPercentEncode(c) || c === p("'");
       }
-      var extraPathPercentEncodeSet = new Set([p("?"), p("`"), p("{"), p("}")]);
+      var extraPathPercentEncodeSet = /* @__PURE__ */ new Set([p("?"), p("`"), p("{"), p("}")]);
       function isPathPercentEncode(c) {
         return isQueryPercentEncode(c) || extraPathPercentEncodeSet.has(c);
       }
-      var extraUserinfoPercentEncodeSet = new Set([p("/"), p(":"), p(";"), p("="), p("@"), p("["), p("\\"), p("]"), p("^"), p("|")]);
+      var extraUserinfoPercentEncodeSet = /* @__PURE__ */ new Set([p("/"), p(":"), p(";"), p("="), p("@"), p("["), p("\\"), p("]"), p("^"), p("|")]);
       function isUserinfoPercentEncode(c) {
         return isPathPercentEncode(c) || extraUserinfoPercentEncodeSet.has(c);
       }
-      var extraComponentPercentEncodeSet = new Set([p("$"), p("%"), p("&"), p("+"), p(",")]);
+      var extraComponentPercentEncodeSet = /* @__PURE__ */ new Set([p("$"), p("%"), p("&"), p("+"), p(",")]);
       function isComponentPercentEncode(c) {
         return isUserinfoPercentEncode(c) || extraComponentPercentEncodeSet.has(c);
       }
-      var extraURLEncodedPercentEncodeSet = new Set([p("!"), p("'"), p("("), p(")"), p("~")]);
+      var extraURLEncodedPercentEncodeSet = /* @__PURE__ */ new Set([p("!"), p("'"), p("("), p(")"), p("~")]);
       function isURLEncodedPercentEncode(c) {
         return isComponentPercentEncode(c) || extraURLEncodedPercentEncodeSet.has(c);
       }
@@ -1892,7 +1916,7 @@ var whatwgURL = (() => {
         }
         return true;
       };
-      var fileOtherwiseCodePoints = new Set([p("/"), p("\\"), p("?"), p("#")]);
+      var fileOtherwiseCodePoints = /* @__PURE__ */ new Set([p("/"), p("\\"), p("?"), p("#")]);
       function startsWithWindowsDriveLetter(input, pointer) {
         const length = input.length - pointer;
         return length >= 2 && isWindowsDriveLetterCodePoints(input[pointer], input[pointer + 1]) && (length === 2 || fileOtherwiseCodePoints.has(input[pointer + 2]));
@@ -2518,7 +2542,7 @@ var whatwgURL = (() => {
         }
         return wrapper[implSymbol];
       };
-      var exposed = new Set(["Window", "Worker"]);
+      var exposed = /* @__PURE__ */ new Set(["Window", "Worker"]);
       exports.install = (globalObject, globalNames) => {
         if (!globalNames.some((globalName) => exposed.has(globalName))) {
           return;
@@ -2533,13 +2557,17 @@ var whatwgURL = (() => {
                 if (utils.isObject(curArg)) {
                   if (curArg[Symbol.iterator] !== void 0) {
                     if (!utils.isObject(curArg)) {
-                      throw new globalObject.TypeError("Failed to construct 'URLSearchParams': parameter 1 sequence is not an iterable object.");
+                      throw new globalObject.TypeError(
+                        "Failed to construct 'URLSearchParams': parameter 1 sequence is not an iterable object."
+                      );
                     } else {
                       const V = [];
                       const tmp = curArg;
                       for (let nextItem of tmp) {
                         if (!utils.isObject(nextItem)) {
-                          throw new globalObject.TypeError("Failed to construct 'URLSearchParams': parameter 1 sequence's element is not an iterable object.");
+                          throw new globalObject.TypeError(
+                            "Failed to construct 'URLSearchParams': parameter 1 sequence's element is not an iterable object."
+                          );
                         } else {
                           const V2 = [];
                           const tmp2 = nextItem;
@@ -2558,9 +2586,11 @@ var whatwgURL = (() => {
                     }
                   } else {
                     if (!utils.isObject(curArg)) {
-                      throw new globalObject.TypeError("Failed to construct 'URLSearchParams': parameter 1 record is not an object.");
+                      throw new globalObject.TypeError(
+                        "Failed to construct 'URLSearchParams': parameter 1 record is not an object."
+                      );
                     } else {
-                      const result = Object.create(null);
+                      const result = /* @__PURE__ */ Object.create(null);
                       for (const key of Reflect.ownKeys(curArg)) {
                         const desc = Object.getOwnPropertyDescriptor(curArg, key);
                         if (desc && desc.enumerable) {
@@ -2596,10 +2626,14 @@ var whatwgURL = (() => {
           append(name, value) {
             const esValue = this !== null && this !== void 0 ? this : globalObject;
             if (!exports.is(esValue)) {
-              throw new globalObject.TypeError("'append' called on an object that is not a valid instance of URLSearchParams.");
+              throw new globalObject.TypeError(
+                "'append' called on an object that is not a valid instance of URLSearchParams."
+              );
             }
             if (arguments.length < 2) {
-              throw new globalObject.TypeError(`Failed to execute 'append' on 'URLSearchParams': 2 arguments required, but only ${arguments.length} present.`);
+              throw new globalObject.TypeError(
+                `Failed to execute 'append' on 'URLSearchParams': 2 arguments required, but only ${arguments.length} present.`
+              );
             }
             const args = [];
             {
@@ -2623,10 +2657,14 @@ var whatwgURL = (() => {
           delete(name) {
             const esValue = this !== null && this !== void 0 ? this : globalObject;
             if (!exports.is(esValue)) {
-              throw new globalObject.TypeError("'delete' called on an object that is not a valid instance of URLSearchParams.");
+              throw new globalObject.TypeError(
+                "'delete' called on an object that is not a valid instance of URLSearchParams."
+              );
             }
             if (arguments.length < 1) {
-              throw new globalObject.TypeError(`Failed to execute 'delete' on 'URLSearchParams': 1 argument required, but only ${arguments.length} present.`);
+              throw new globalObject.TypeError(
+                `Failed to execute 'delete' on 'URLSearchParams': 1 argument required, but only ${arguments.length} present.`
+              );
             }
             const args = [];
             {
@@ -2645,7 +2683,9 @@ var whatwgURL = (() => {
               throw new globalObject.TypeError("'get' called on an object that is not a valid instance of URLSearchParams.");
             }
             if (arguments.length < 1) {
-              throw new globalObject.TypeError(`Failed to execute 'get' on 'URLSearchParams': 1 argument required, but only ${arguments.length} present.`);
+              throw new globalObject.TypeError(
+                `Failed to execute 'get' on 'URLSearchParams': 1 argument required, but only ${arguments.length} present.`
+              );
             }
             const args = [];
             {
@@ -2661,10 +2701,14 @@ var whatwgURL = (() => {
           getAll(name) {
             const esValue = this !== null && this !== void 0 ? this : globalObject;
             if (!exports.is(esValue)) {
-              throw new globalObject.TypeError("'getAll' called on an object that is not a valid instance of URLSearchParams.");
+              throw new globalObject.TypeError(
+                "'getAll' called on an object that is not a valid instance of URLSearchParams."
+              );
             }
             if (arguments.length < 1) {
-              throw new globalObject.TypeError(`Failed to execute 'getAll' on 'URLSearchParams': 1 argument required, but only ${arguments.length} present.`);
+              throw new globalObject.TypeError(
+                `Failed to execute 'getAll' on 'URLSearchParams': 1 argument required, but only ${arguments.length} present.`
+              );
             }
             const args = [];
             {
@@ -2683,7 +2727,9 @@ var whatwgURL = (() => {
               throw new globalObject.TypeError("'has' called on an object that is not a valid instance of URLSearchParams.");
             }
             if (arguments.length < 1) {
-              throw new globalObject.TypeError(`Failed to execute 'has' on 'URLSearchParams': 1 argument required, but only ${arguments.length} present.`);
+              throw new globalObject.TypeError(
+                `Failed to execute 'has' on 'URLSearchParams': 1 argument required, but only ${arguments.length} present.`
+              );
             }
             const args = [];
             {
@@ -2702,7 +2748,9 @@ var whatwgURL = (() => {
               throw new globalObject.TypeError("'set' called on an object that is not a valid instance of URLSearchParams.");
             }
             if (arguments.length < 2) {
-              throw new globalObject.TypeError(`Failed to execute 'set' on 'URLSearchParams': 2 arguments required, but only ${arguments.length} present.`);
+              throw new globalObject.TypeError(
+                `Failed to execute 'set' on 'URLSearchParams': 2 arguments required, but only ${arguments.length} present.`
+              );
             }
             const args = [];
             {
@@ -2733,7 +2781,9 @@ var whatwgURL = (() => {
           toString() {
             const esValue = this !== null && this !== void 0 ? this : globalObject;
             if (!exports.is(esValue)) {
-              throw new globalObject.TypeError("'toString' called on an object that is not a valid instance of URLSearchParams.");
+              throw new globalObject.TypeError(
+                "'toString' called on an object that is not a valid instance of URLSearchParams."
+              );
             }
             return esValue[implSymbol].toString();
           }
@@ -2745,22 +2795,30 @@ var whatwgURL = (() => {
           }
           values() {
             if (!exports.is(this)) {
-              throw new globalObject.TypeError("'values' called on an object that is not a valid instance of URLSearchParams.");
+              throw new globalObject.TypeError(
+                "'values' called on an object that is not a valid instance of URLSearchParams."
+              );
             }
             return exports.createDefaultIterator(globalObject, this, "value");
           }
           entries() {
             if (!exports.is(this)) {
-              throw new globalObject.TypeError("'entries' called on an object that is not a valid instance of URLSearchParams.");
+              throw new globalObject.TypeError(
+                "'entries' called on an object that is not a valid instance of URLSearchParams."
+              );
             }
             return exports.createDefaultIterator(globalObject, this, "key+value");
           }
           forEach(callback) {
             if (!exports.is(this)) {
-              throw new globalObject.TypeError("'forEach' called on an object that is not a valid instance of URLSearchParams.");
+              throw new globalObject.TypeError(
+                "'forEach' called on an object that is not a valid instance of URLSearchParams."
+              );
             }
             if (arguments.length < 1) {
-              throw new globalObject.TypeError("Failed to execute 'forEach' on 'iterable': 1 argument required, but only 0 present.");
+              throw new globalObject.TypeError(
+                "Failed to execute 'forEach' on 'iterable': 1 argument required, but only 0 present."
+              );
             }
             callback = Function2.convert(globalObject, callback, {
               context: "Failed to execute 'forEach' on 'iterable': The callback provided as parameter 1"
@@ -3059,7 +3117,7 @@ var whatwgURL = (() => {
         }
         return wrapper[implSymbol];
       };
-      var exposed = new Set(["Window", "Worker"]);
+      var exposed = /* @__PURE__ */ new Set(["Window", "Worker"]);
       exports.install = (globalObject, globalNames) => {
         if (!globalNames.some((globalName) => exposed.has(globalName))) {
           return;
@@ -3068,7 +3126,9 @@ var whatwgURL = (() => {
         class URL {
           constructor(url) {
             if (arguments.length < 1) {
-              throw new globalObject.TypeError(`Failed to construct 'URL': 1 argument required, but only ${arguments.length} present.`);
+              throw new globalObject.TypeError(
+                `Failed to construct 'URL': 1 argument required, but only ${arguments.length} present.`
+              );
             }
             const args = [];
             {
@@ -3351,7 +3411,6 @@ var whatwgURL = (() => {
   // index.js
   var require_whatwg_url = __commonJS({
     "index.js"(exports) {
-      "use strict";
       var { URL, URLSearchParams } = require_webidl2js_wrapper();
       var urlStateMachine = require_url_state_machine();
       var percentEncoding = require_percent_encoding();
