@@ -1,9 +1,9 @@
 * {
-  font-family: Georgia;
   box-sizing: border-box;
 }
 
 body {
+  font-family: Georgia;
   max-width: 70em;
   margin: 12px;
 }
@@ -89,6 +89,10 @@ form input {
   color: #CCC;
 }
 
-.output td.non-string {
-  font-style: italic;
+summary {
+  cursor: pointer;
+}
+
+samp {
+  font-family: monospace;
 }
