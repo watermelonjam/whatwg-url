@@ -2371,11 +2371,14 @@ var require_URLSearchParams_impl = __commonJS({
       }
       _updateSteps() {
         if (this._url !== null) {
-          let query = urlencoded.serializeUrlencoded(this._list);
-          if (query === "") {
-            query = null;
+          let serializedQuery = urlencoded.serializeUrlencoded(this._list);
+          if (serializedQuery === "") {
+            serializedQuery = null;
           }
-          this._url._url.query = query;
+          this._url._url.query = serializedQuery;
+          if (serializedQuery === null) {
+            this._url._potentiallyStripTrailingSpacesFromAnOpaquePath();
+          }
         }
       }
       append(name, value) {
@@ -3016,6 +3019,7 @@ var require_URL_impl = __commonJS({
         if (v === "") {
           url.query = null;
           this._query._list = [];
+          this._potentiallyStripTrailingSpacesFromAnOpaquePath();
           return;
         }
         const input = v[0] === "?" ? v.substring(1) : v;
@@ -3035,6 +3039,7 @@ var require_URL_impl = __commonJS({
       set hash(v) {
         if (v === "") {
           this._url.fragment = null;
+          this._potentiallyStripTrailingSpacesFromAnOpaquePath();
           return;
         }
         const input = v[0] === "#" ? v.substring(1) : v;
@@ -3043,6 +3048,18 @@ var require_URL_impl = __commonJS({
       }
       toJSON() {
         return this.href;
+      }
+      _potentiallyStripTrailingSpacesFromAnOpaquePath() {
+        if (!usm.hasAnOpaquePath(this._url)) {
+          return;
+        }
+        if (this._url.fragment !== null) {
+          return;
+        }
+        if (this._url.query !== null) {
+          return;
+        }
+        this._url.path = this._url.path.replace(/\u0020+$/u, "");
       }
     };
   }
