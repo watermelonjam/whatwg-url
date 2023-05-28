@@ -2396,6 +2396,9 @@ var require_URLSearchParams_impl = __commonJS({
           }
         }
       }
+      get size() {
+        return this._list.length;
+      }
       append(name, value) {
         this._list.push([name, value]);
         this._updateSteps();
@@ -2849,6 +2852,15 @@ var require_URLSearchParams = __commonJS({
             i++;
           }
         }
+        get size() {
+          const esValue = this !== null && this !== void 0 ? this : globalObject;
+          if (!exports.is(esValue)) {
+            throw new globalObject.TypeError(
+              "'get size' called on an object that is not a valid instance of URLSearchParams."
+            );
+          }
+          return esValue[implSymbol]["size"];
+        }
       }
       Object.defineProperties(URLSearchParams.prototype, {
         append: { enumerable: true },
@@ -2863,6 +2875,7 @@ var require_URLSearchParams = __commonJS({
         values: { enumerable: true },
         entries: { enumerable: true },
         forEach: { enumerable: true },
+        size: { enumerable: true },
         [Symbol.toStringTag]: { value: "URLSearchParams", configurable: true },
         [Symbol.iterator]: { value: URLSearchParams.prototype.entries, configurable: true, writable: true }
       });
