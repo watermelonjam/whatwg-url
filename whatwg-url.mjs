@@ -2921,6 +2921,8 @@ var require_URL_impl = __commonJS({
     var urlencoded = require_urlencoded();
     var URLSearchParams = require_URLSearchParams();
     exports.implementation = class URLImpl {
+      // Unlike the spec, we duplicate some code between the constructor and canParse, because we want to give useful error
+      // messages in the constructor that distinguish between the different causes of failure.
       constructor(globalObject, constructorArgs) {
         const url = constructorArgs[0];
         const base = constructorArgs[1];
@@ -2939,6 +2941,20 @@ var require_URL_impl = __commonJS({
         this._url = parsedURL;
         this._query = URLSearchParams.createImpl(globalObject, [query], { doNotStripQMark: true });
         this._query._url = this;
+      }
+      static canParse(url, base) {
+        let parsedBase = null;
+        if (base !== void 0) {
+          parsedBase = usm.basicURLParse(base);
+          if (parsedBase === null) {
+            return false;
+          }
+        }
+        const parsedURL = usm.basicURLParse(url, { baseURL: parsedBase });
+        if (parsedURL === null) {
+          return false;
+        }
+        return true;
       }
       get href() {
         return usm.serializeURL(this._url);
@@ -3404,6 +3420,33 @@ var require_URL = __commonJS({
           });
           esValue[implSymbol]["hash"] = V;
         }
+        static canParse(url) {
+          if (arguments.length < 1) {
+            throw new globalObject.TypeError(
+              `Failed to execute 'canParse' on 'URL': 1 argument required, but only ${arguments.length} present.`
+            );
+          }
+          const args = [];
+          {
+            let curArg = arguments[0];
+            curArg = conversions["USVString"](curArg, {
+              context: "Failed to execute 'canParse' on 'URL': parameter 1",
+              globals: globalObject
+            });
+            args.push(curArg);
+          }
+          {
+            let curArg = arguments[1];
+            if (curArg !== void 0) {
+              curArg = conversions["USVString"](curArg, {
+                context: "Failed to execute 'canParse' on 'URL': parameter 2",
+                globals: globalObject
+              });
+            }
+            args.push(curArg);
+          }
+          return Impl.implementation.canParse(...args);
+        }
       }
       Object.defineProperties(URL.prototype, {
         toJSON: { enumerable: true },
@@ -3422,6 +3465,7 @@ var require_URL = __commonJS({
         hash: { enumerable: true },
         [Symbol.toStringTag]: { value: "URL", configurable: true }
       });
+      Object.defineProperties(URL, { canParse: { enumerable: true } });
       ctorRegistry[interfaceName] = URL;
       Object.defineProperty(globalObject, interfaceName, {
         configurable: true,
