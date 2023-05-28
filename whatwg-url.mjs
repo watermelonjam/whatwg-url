@@ -2403,10 +2403,10 @@ var require_URLSearchParams_impl = __commonJS({
         this._list.push([name, value]);
         this._updateSteps();
       }
-      delete(name) {
+      delete(name, value) {
         let i = 0;
         while (i < this._list.length) {
-          if (this._list[i][0] === name) {
+          if (this._list[i][0] === name && (value === void 0 || this._list[i][1] === value)) {
             this._list.splice(i, 1);
           } else {
             i++;
@@ -2431,9 +2431,9 @@ var require_URLSearchParams_impl = __commonJS({
         }
         return output;
       }
-      has(name) {
+      has(name, value) {
         for (const tuple of this._list) {
-          if (tuple[0] === name) {
+          if (tuple[0] === name && (value === void 0 || tuple[1] === value)) {
             return true;
           }
         }
@@ -2694,6 +2694,16 @@ var require_URLSearchParams = __commonJS({
             });
             args.push(curArg);
           }
+          {
+            let curArg = arguments[1];
+            if (curArg !== void 0) {
+              curArg = conversions["USVString"](curArg, {
+                context: "Failed to execute 'delete' on 'URLSearchParams': parameter 2",
+                globals: globalObject
+              });
+            }
+            args.push(curArg);
+          }
           return utils.tryWrapperForImpl(esValue[implSymbol].delete(...args));
         }
         get(name) {
@@ -2757,6 +2767,16 @@ var require_URLSearchParams = __commonJS({
               context: "Failed to execute 'has' on 'URLSearchParams': parameter 1",
               globals: globalObject
             });
+            args.push(curArg);
+          }
+          {
+            let curArg = arguments[1];
+            if (curArg !== void 0) {
+              curArg = conversions["USVString"](curArg, {
+                context: "Failed to execute 'has' on 'URLSearchParams': parameter 2",
+                globals: globalObject
+              });
+            }
             args.push(curArg);
           }
           return esValue[implSymbol].has(...args);
