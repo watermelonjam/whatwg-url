@@ -2178,12 +2178,16 @@ var require_url_state_machine = __commonJS({
     module.exports.serializePath = serializePath;
     module.exports.serializeURLOrigin = function(url) {
       switch (url.scheme) {
-        case "blob":
-          try {
-            return module.exports.serializeURLOrigin(module.exports.parseURL(serializePath(url)));
-          } catch (e) {
+        case "blob": {
+          const pathURL = module.exports.parseURL(serializePath(url));
+          if (pathURL === null) {
             return "null";
           }
+          if (pathURL.scheme !== "http" && pathURL.scheme !== "https") {
+            return "null";
+          }
+          return module.exports.serializeURLOrigin(pathURL);
+        }
         case "ftp":
         case "http":
         case "https":
